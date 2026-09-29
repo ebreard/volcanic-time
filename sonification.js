@@ -330,6 +330,20 @@ export class VolcanoSound {
     return events.length > 0;
   }
 
+  // The audio key: sample records played on their own, a short gap apart, even while paused.
+  preview(events, gap = .35) {
+    const ctx = this.context;
+    if (!this.enabled || !this.volume || !ctx || ctx.state !== "running" || !this.samples) return false;
+    if (!this.playing) {
+      // Paused playback leaves the master closed and the mix ducked; open both for the key.
+      this.mix.gain.setTargetAtTime(1, ctx.currentTime, .004);
+      this.rampMaster(this.volume * .8);
+    }
+    const at = ctx.currentTime + .03;
+    events.forEach((event, i) => this.playBatch([event], null, at + i * gap));
+    return true;
+  }
+
   playEvent(event, centerLongitude, zoom, at) {
     return this.playBatch([event], null, at);
   }

@@ -1,5 +1,5 @@
 import { createReliefLayer } from "./relief.js?v=4";
-import { VolcanoSound } from "./sonification.js?v=11";
+import { VolcanoSound } from "./sonification.js?v=12";
 import unlocatedEruptions from "./unlocated-eruptions.js";
 import { installSonificationHelp } from "./sonification-help.js?v=2";
 import { installVolcanoSearch } from "./volcano-search.js";
@@ -1541,6 +1541,25 @@ import infoIcon from "./vendor/lucide/info.js";
       soundButton.removeAttribute("aria-busy");
     }
   });
+  // Audio key: each VEI in the key plays its sound on click, or on hover while paused.
+  const keyEvents = button => button.dataset.vei.split(",").map(vei => ({ vei: vei === "?" ? null : Number(vei), precision: 2, lon: 0 }));
+  for (const button of document.querySelectorAll(".legend-sound")) {
+    button.addEventListener("click", async () => {
+      try {
+        if (!sound.enabled || sound.context?.state !== "running") {
+          updateSoundControls("Loading drums and soft piano");
+          await sound.setEnabled(true);
+          updateSoundControls();
+        }
+        sound.preview(keyEvents(button));
+      } catch (error) {
+        handleSoundError(error);
+      }
+    });
+    button.addEventListener("pointerenter", event => {
+      if (event.pointerType === "mouse" && !playing) sound.preview(keyEvents(button));
+    });
+  }
   soundVolume.addEventListener("input", () => {
     sound.setVolume(Number(soundVolume.value) / 100);
     soundVolume.setAttribute("aria-valuetext", `${soundVolume.value}%`);

@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0f14">
   <title>Volcanic Time</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0f14'/%3E%3Cpath d='M8 49 26 20l8 13 6-9 16 25Z' fill='%23e08a3c'/%3E%3Ccircle cx='31' cy='14' r='5' fill='%23f0d68c'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=39">
+  <link rel="stylesheet" href="styles.css?v=40">
 </head>
 <body>
   <main class="app" aria-label="Volcanic Time eruption explorer">
@@ -108,17 +108,17 @@
       <section class="legend" aria-label="Volcanic Explosivity Index legend">
         <div class="legend-title">VEI key</div>
         <div class="legend-items">
-          <span><i class="unknown" style="--c:#d8dfe6"></i>?</span>
-          <span><i style="--c:#c52a38"></i>0–1</span>
-          <span><i style="--c:#e93f2d"></i>2</span>
-          <span><i style="--c:#fa6e22"></i>3</span>
-          <span><i style="--c:#ff9625"></i>4</span>
-          <span><i style="--c:#ffbd34"></i>5</span>
-          <span><i style="--c:#f7e36d"></i>6</span>
-          <span><i style="--c:#fffced"></i>7–8</span>
+          <button type="button" class="legend-sound" data-vei="?" aria-label="Hear an eruption with unknown VEI"><i class="unknown" style="--c:#d8dfe6"></i>?</button>
+          <button type="button" class="legend-sound" data-vei="0,1" aria-label="Hear VEI 0 and VEI 1"><i style="--c:#c52a38"></i>0–1</button>
+          <button type="button" class="legend-sound" data-vei="2" aria-label="Hear VEI 2"><i style="--c:#e93f2d"></i>2</button>
+          <button type="button" class="legend-sound" data-vei="3" aria-label="Hear VEI 3"><i style="--c:#fa6e22"></i>3</button>
+          <button type="button" class="legend-sound" data-vei="4" aria-label="Hear VEI 4"><i style="--c:#ff9625"></i>4</button>
+          <button type="button" class="legend-sound" data-vei="5" aria-label="Hear VEI 5"><i style="--c:#ffbd34"></i>5</button>
+          <button type="button" class="legend-sound" data-vei="6" aria-label="Hear VEI 6"><i style="--c:#f7e36d"></i>6</button>
+          <button type="button" class="legend-sound" data-vei="7,8" aria-label="Hear VEI 7 and VEI 8"><i style="--c:#fffced"></i>7–8</button>
         </div>
         <div class="boundary-key"><i></i><span>PB2002 plate boundaries</span></div>
-        <p class="legend-note">Volcanic Explosivity Index (0–8): primarily bulk tephra volume; roughly 10× per step from VEI 2. ? = unknown, not zero.</p>
+        <p class="legend-note">Volcanic Explosivity Index (0–8): primarily bulk tephra volume; roughly 10× per step from VEI 2. ? = unknown, not zero. Click a colour, or hover over it while paused, to hear it.</p>
       </section>
 
       <aside class="country-panel" aria-label="Top countries by recorded eruptions">
@@ -272,6 +272,6 @@
   </dialog>
 
   <script src="data.js"></script>
-  <script type="module" src="app.js?v=56"></script>
+  <script type="module" src="app.js?v=57"></script>
 </body>
 </html>

@@ -127,6 +127,8 @@ h1 { margin: 0; font-size: 15px; letter-spacing: .16em; font-weight: 750; }
 .legend-items { display: grid; grid-template-columns: repeat(2, 1fr); gap: 7px 11px; font-size: 12px; color: #b8c3cf; }
 .legend-items i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--c); margin-right: 7px; box-shadow: 0 0 8px var(--c); }
 .legend-items i.unknown { box-sizing: border-box; background: transparent; border: 2px solid var(--c); box-shadow: none; }
+.legend-sound { display: flex; align-items: center; justify-self: start; margin: -3px 0 -3px -5px; padding: 3px 7px 3px 5px; border: 1px solid transparent; border-radius: 6px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.legend-sound:hover, .legend-sound:focus-visible { border-color: var(--line); background: rgba(255,255,255,.06); color: #e6edf4; }
 .boundary-key { display: flex; align-items: center; gap: 8px; margin-top: 11px; color: #b8c3cf; font-size: 12px; }
 .boundary-key i { width: 30px; height: 0; border-top: 1px dashed rgba(214,232,248,.8); box-shadow: 0 0 8px rgba(122,184,255,.55); }
 [data-map="grey"] .boundary-key i { border-top-color: rgba(222,226,230,.6); box-shadow: none; }
