@@ -1543,14 +1543,19 @@ import infoIcon from "./vendor/lucide/info.js";
   });
   // Audio key: each VEI in the key plays its sound on click, or on hover while paused.
   const keyEvents = button => button.dataset.vei.split(",").map(vei => ({ vei: vei === "?" ? null : Number(vei), precision: 2, lon: 0 }));
+  // Browsers allow audio only after a click or key press, so start it on the
+  // first one anywhere; hovering the key can then play before Play is pressed.
+  const unlockAudio = () => {
+    if (sound.enabled && !sound.ready) sound.setEnabled(true).then(() => updateSoundControls()).catch(() => {});
+  };
+  document.addEventListener("pointerdown", unlockAudio, { once: true, capture: true });
+  document.addEventListener("keydown", unlockAudio, { once: true, capture: true });
   for (const button of document.querySelectorAll(".legend-sound")) {
     button.addEventListener("click", async () => {
       try {
-        if (!sound.enabled || sound.context?.state !== "running") {
-          updateSoundControls("Loading drums and soft piano");
-          await sound.setEnabled(true);
-          updateSoundControls();
-        }
+        if (!sound.samples) updateSoundControls("Loading drums and soft piano");
+        await sound.setEnabled(true);
+        updateSoundControls();
         sound.preview(keyEvents(button));
       } catch (error) {
         handleSoundError(error);

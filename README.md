@@ -25,7 +25,7 @@ Built by Eric C.P. Breard, University of Edinburgh, School of GeoSciences.
 | Calendar time / Event rhythm | Toggle between calendar timing and event-rhythm timing. |
 | All eruptions | Jump to the complete catalogue, one symbol per volcano. |
 | Sound button and slider | Mute or set the volume. |
-| VEI key | Click a colour, or hover over it while paused, to hear that VEI's drum and piano. |
+| VEI key | Click a colour to hear that VEI's drum and piano. Once sound has started, hovering over it while paused plays it too. |
 | Browse Eruptions | Search box plus VEI and Date filters. Click a record to see it and open its GVP page. |
 | Map buttons | Zoom in, zoom out, reset the view. |
 | Export PNG / GIF / MP4 | Save the current view. MP4 records the full catalogue at 1x calendar speed (about three minutes), or a 40-second version for social media. Keep the tab visible until it finishes. |
