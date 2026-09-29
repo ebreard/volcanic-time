@@ -1213,21 +1213,22 @@ import infoIcon from "./vendor/lucide/info.js";
     ctx.font = `600 ${Math.round(w * .028)}px system-ui, sans-serif`;
     ctx.fillText(title, w * .04, h * .09, w * .92);
     ctx.fillStyle = "#8fa1b2";
-    ctx.font = `400 ${Math.max(11, Math.round(w * .012))}px system-ui, sans-serif`;
+    const creditSize = Math.max(11, Math.round(w * .012));
+    ctx.font = `400 ${creditSize}px system-ui, sans-serif`;
     ctx.fillText(detail, w * .04, h * .875, w * .64);
     ctx.fillText("Smithsonian GVP · VOTW 5.3.5 / 5.4.0", w * .04, h * .94, w * .64);
+    // Author credit in the same style, on the GVP line, flush with the map's right edge.
+    const credit = "ECP Breard";
+    const creditX = w * .96 - ctx.measureText(credit).width;
+    ctx.fillText(credit, creditX, h * .94);
     const logoSize = h * .08;
-    const logoX = w * .73;
-    const logoY = h * .85;
+    const logoX = creditX - w * .01 - logoSize;
+    const logoY = h * .94 - creditSize * .36 - logoSize / 2;
     const ratio = Math.min(logoSize / exportLogo.naturalWidth, logoSize / exportLogo.naturalHeight);
     const logoW = exportLogo.naturalWidth * ratio, logoH = exportLogo.naturalHeight * ratio;
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(exportLogo, logoX + (logoSize - logoW) / 2, logoY + (logoSize - logoH) / 2, logoW, logoH);
-    ctx.fillStyle = "#f0f5fb";
-    ctx.textBaseline = "middle";
-    ctx.font = `600 ${Math.round(w * .015)}px system-ui, sans-serif`;
-    ctx.fillText("ECP Breard", logoX + logoSize + w * .012, logoY + logoSize / 2, w * .96 - logoX - logoSize - w * .012);
     ctx.restore();
   }
 
