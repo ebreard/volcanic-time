@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-map="colour">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -7,7 +7,7 @@
   <meta name="theme-color" content="#0b0f14">
   <title>Volcanic Time</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0f14'/%3E%3Cpath d='M8 49 26 20l8 13 6-9 16 25Z' fill='%23e08a3c'/%3E%3Ccircle cx='31' cy='14' r='5' fill='%23f0d68c'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="styles.css?v=37">
+  <link rel="stylesheet" href="styles.css?v=39">
 </head>
 <body>
   <main class="app" aria-label="Volcanic Time eruption explorer">
@@ -108,14 +108,14 @@
       <section class="legend" aria-label="Volcanic Explosivity Index legend">
         <div class="legend-title">VEI key</div>
         <div class="legend-items">
-          <span><i style="--c:#6d7a86"></i>?</span>
-          <span><i style="--c:#7ab8ff"></i>0–1</span>
-          <span><i style="--c:#7fb394"></i>2</span>
-          <span><i style="--c:#f0d68c"></i>3</span>
-          <span><i style="--c:#e08a3c"></i>4</span>
-          <span><i style="--c:#c65b3d"></i>5</span>
-          <span><i style="--c:#b44848"></i>6</span>
-          <span><i style="--c:#ece6d8"></i>7–8</span>
+          <span><i class="unknown" style="--c:#d8dfe6"></i>?</span>
+          <span><i style="--c:#c52a38"></i>0–1</span>
+          <span><i style="--c:#e93f2d"></i>2</span>
+          <span><i style="--c:#fa6e22"></i>3</span>
+          <span><i style="--c:#ff9625"></i>4</span>
+          <span><i style="--c:#ffbd34"></i>5</span>
+          <span><i style="--c:#f7e36d"></i>6</span>
+          <span><i style="--c:#fffced"></i>7–8</span>
         </div>
         <div class="boundary-key"><i></i><span>PB2002 plate boundaries</span></div>
         <p class="legend-note">Volcanic Explosivity Index (0–8): primarily bulk tephra volume; roughly 10× per step from VEI 2. ? = unknown, not zero.</p>
@@ -182,7 +182,14 @@
       </div>
     </section>
 
-    <button id="reduceMotion" class="reduce-motion" type="button" aria-pressed="false" aria-describedby="motionTooltip" aria-expanded="false">Reduce motion</button>
+    <div class="view-toggles">
+      <button id="greyMap" class="reduce-motion" type="button" aria-pressed="false" aria-describedby="mapTooltip" aria-expanded="false">Grey map</button>
+      <button id="reduceMotion" class="reduce-motion" type="button" aria-pressed="false" aria-describedby="motionTooltip" aria-expanded="false">Reduce motion</button>
+    </div>
+    <div id="mapTooltip" class="sonification-tooltip" role="tooltip" hidden>
+      <strong>Grey map</strong>
+      <p>When on, the relief, coastlines and plate boundaries turn grey, so only the eruptions carry colour. Eruption colours stay the same, and exports use the map shown.</p>
+    </div>
     <div id="motionTooltip" class="sonification-tooltip" role="tooltip" hidden>
       <strong>Less movement on the map</strong>
       <p>When on, eruption rings stop expanding and fade away sooner. Playback speed, eruption records and sound stay the same.</p>
@@ -263,6 +270,6 @@
   </dialog>
 
   <script src="data.js"></script>
-  <script type="module" src="app.js?v=47"></script>
+  <script type="module" src="app.js?v=50"></script>
 </body>
 </html>

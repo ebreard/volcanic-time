@@ -1,4 +1,4 @@
-import { createReliefLayer } from "./relief.js?v=2";
+import { createReliefLayer } from "./relief.js?v=4";
 import { VolcanoSound } from "./sonification.js?v=10";
 import unlocatedEruptions from "./unlocated-eruptions.js";
 import { installSonificationHelp } from "./sonification-help.js?v=2";
@@ -28,8 +28,34 @@ import infoIcon from "./vendor/lucide/info.js";
   const minYear = eruptions[0].t;
   const maxYear = eruptions[eruptions.length - 1].t + 1 / 365;
   const plateBoundaryUrl = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json";
-  const veiColors = ["#7ab8ff", "#7ab8ff", "#7fb394", "#f0d68c", "#e08a3c", "#c65b3d", "#b44848", "#ece6d8", "#ffffff"];
-  const unknownColor = "#6d7a86";
+  // Lava ramp from deep crimson to white: even lightness steps, kept clear of the blue map.
+  const veiColors = ["#c52a38", "#c52a38", "#e93f2d", "#fa6e22", "#ff9625", "#ffbd34", "#f7e36d", "#fffced", "#ffffff"];
+  const unknownColor = "#d8dfe6";
+  const veiColor = vei => vei == null ? unknownColor : veiColors[Math.min(8, vei)];
+  // Map linework. "colour" is the original look; "grey" leaves colour to the eruptions.
+  const mapPalettes = {
+    grey: {
+      graticule: "rgba(200,206,212,.07)",
+      land: [[0, "rgba(44,49,54,.96)"], [.42, "rgba(58,63,68,.96)"], [.72, "rgba(64,68,72,.94)"], [1, "rgba(40,45,50,.96)"]],
+      sheen: [[0, "rgba(160,166,172,.14)"], [.55, "rgba(110,116,122,.05)"], [1, "rgba(20,24,28,0)"]],
+      coast: "rgba(214,219,224,.2)", coastNoRelief: "rgba(214,219,224,.5)", coastWidth: 1, coastGlow: null,
+      plates: "rgba(222,226,230,.3)", plateWidth: 1, plateGlow: null,
+      exportLand: "#30353a", exportCoast: "rgba(214,219,224,.28)",
+      halo: [[0, "rgba(255,255,255,.42)"], [.22, "rgba(230,234,238,.14)"], [1, "rgba(30,34,38,0)"]],
+      haloRing: "rgba(226,230,234,.6)",
+    },
+    colour: {
+      graticule: "rgba(122,184,255,.18)",
+      land: [[0, "rgba(34,63,78,.96)"], [.42, "rgba(58,91,91,.96)"], [.72, "rgba(73,108,84,.94)"], [1, "rgba(31,53,66,.96)"]],
+      sheen: [[0, "rgba(132,171,142,.22)"], [.55, "rgba(84,122,118,.08)"], [1, "rgba(18,31,42,0)"]],
+      coast: "rgba(194,228,221,.34)", coastNoRelief: "rgba(194,228,221,.72)", coastWidth: 1.15, coastGlow: "rgba(84,135,152,.5)",
+      plates: "rgba(214,232,248,.45)", plateWidth: 1.05, plateGlow: "rgba(122,184,255,.72)",
+      exportLand: "#223d4d", exportCoast: "#83aeca",
+      halo: [[0, "rgba(161,227,255,.5)"], [.22, "rgba(122,184,255,.18)"], [1, "rgba(36,60,84,0)"]],
+      haloRing: "rgba(122,184,255,.72)",
+    },
+  };
+  let mapPalette = mapPalettes.colour;
   const volcanoSummaries = new Map();
   for (const event of eruptions) {
     if (!Number.isFinite(event.lon) || !Number.isFinite(event.lat)) continue;
@@ -38,6 +64,28 @@ import infoIcon from "./vendor/lucide/info.js";
     if (event.vei != null) summary.maxVei = summary.maxVei == null ? event.vei : Math.max(summary.maxVei, event.vei);
     summary.event = event;
     volcanoSummaries.set(event.v, summary);
+  }
+  // Highest VEI last, so large eruptions sit on top of their neighbours.
+  const overviewSummaries = [...volcanoSummaries.values()].sort((a, b) => (a.maxVei ?? -1) - (b.maxVei ?? -1));
+  const dotOutline = "rgba(6,9,12,.8)";
+
+  function drawDot(ctx, x, y, radius, vei, alpha, outline = 1) {
+    ctx.globalAlpha = alpha;
+    ctx.beginPath();
+    if (vei == null) {
+      // Unknown VEI is an open ring, so it never reads as a small eruption.
+      const ring = Math.max(1.2, radius * .4);
+      ctx.arc(x, y, radius - ring / 2, 0, Math.PI * 2);
+      ctx.strokeStyle = dotOutline; ctx.lineWidth = ring + outline * 2; ctx.stroke();
+      ctx.strokeStyle = unknownColor; ctx.lineWidth = ring; ctx.stroke();
+      return;
+    }
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
+    ctx.fillStyle = veiColors[Math.min(8, vei)];
+    ctx.fill();
+    ctx.strokeStyle = dotOutline;
+    ctx.lineWidth = outline;
+    ctx.stroke();
   }
 
   const mapCanvas = document.querySelector("#map");
@@ -453,8 +501,9 @@ import infoIcon from "./vendor/lucide/info.js";
 
     relief.draw(mapCtx, bounds, mapCenterLon, mapCenterLat, mapZoom);
 
+    const palette = mapPalette;
     mapCtx.lineWidth = 1;
-    mapCtx.strokeStyle = "rgba(122,184,255,.18)";
+    mapCtx.strokeStyle = palette.graticule;
     for (let lon = -180; lon <= 540; lon += 30) {
       const [x1, y1] = project(lon, -82);
       const [x2, y2] = project(lon, 82);
@@ -467,10 +516,7 @@ import infoIcon from "./vendor/lucide/info.js";
     }
 
     const landGradient = mapCtx.createLinearGradient(bounds.left, bounds.top, bounds.left + bounds.mapWidth, bounds.top + bounds.mapHeight);
-    landGradient.addColorStop(0, "rgba(34,63,78,.96)");
-    landGradient.addColorStop(.42, "rgba(58,91,91,.96)");
-    landGradient.addColorStop(.72, "rgba(73,108,84,.94)");
-    landGradient.addColorStop(1, "rgba(31,53,66,.96)");
+    for (const [stop, color] of palette.land) landGradient.addColorStop(stop, color);
     mapCtx.save();
     mapCtx.shadowColor = "rgba(2,8,14,.48)";
     mapCtx.shadowBlur = 14;
@@ -483,35 +529,37 @@ import infoIcon from "./vendor/lucide/info.js";
       bounds.left + bounds.mapWidth * .58, bounds.top + bounds.mapHeight * .32, 0,
       bounds.left + bounds.mapWidth * .58, bounds.top + bounds.mapHeight * .32, bounds.mapWidth * .68
     );
-    landSheen.addColorStop(0, "rgba(132,171,142,.22)");
-    landSheen.addColorStop(.55, "rgba(84,122,118,.08)");
-    landSheen.addColorStop(1, "rgba(18,31,42,0)");
+    for (const [stop, color] of palette.sheen) landSheen.addColorStop(stop, color);
     mapCtx.fillStyle = landSheen;
     if (!relief.ready) for (const path of landPaths) mapCtx.fill(path);
 
-    mapCtx.strokeStyle = relief.ready ? "rgba(194,228,221,.34)" : "rgba(194,228,221,.72)";
-    mapCtx.lineWidth = 1.15;
+    mapCtx.strokeStyle = relief.ready ? palette.coast : palette.coastNoRelief;
+    mapCtx.lineWidth = palette.coastWidth;
     for (const path of landPaths) mapCtx.stroke(path);
 
-    mapCtx.save();
-    mapCtx.globalAlpha = .28;
-    mapCtx.strokeStyle = "rgba(84,135,152,.5)";
-    mapCtx.lineWidth = 2.6;
-    for (const path of landPaths) mapCtx.stroke(path);
-    mapCtx.restore();
+    if (palette.coastGlow) {
+      mapCtx.save();
+      mapCtx.globalAlpha = .28;
+      mapCtx.strokeStyle = palette.coastGlow;
+      mapCtx.lineWidth = 2.6;
+      for (const path of landPaths) mapCtx.stroke(path);
+      mapCtx.restore();
+    }
 
     if (plateBoundaryPaths.length) {
       mapCtx.save();
       mapCtx.globalCompositeOperation = "source-over";
-      mapCtx.strokeStyle = "rgba(240,214,140,.5)";
-      mapCtx.lineWidth = 1.05;
+      mapCtx.strokeStyle = palette.plates;
+      mapCtx.lineWidth = palette.plateWidth;
       mapCtx.setLineDash([5, 5]);
       for (const path of plateBoundaryPaths) mapCtx.stroke(path);
       mapCtx.setLineDash([]);
-      mapCtx.globalAlpha = .32;
-      mapCtx.strokeStyle = "rgba(122,184,255,.72)";
-      mapCtx.lineWidth = 2.4;
-      for (const path of plateBoundaryPaths) mapCtx.stroke(path);
+      if (palette.plateGlow) {
+        mapCtx.globalAlpha = .32;
+        mapCtx.strokeStyle = palette.plateGlow;
+        mapCtx.lineWidth = 2.4;
+        for (const path of plateBoundaryPaths) mapCtx.stroke(path);
+      }
       mapCtx.restore();
     }
     mapCtx.restore();
@@ -520,17 +568,15 @@ import infoIcon from "./vendor/lucide/info.js";
   function drawOverview() {
     mapCtx.save();
     mapCtx.globalCompositeOperation = "source-over";
-    for (const summary of volcanoSummaries.values()) {
+    for (const summary of overviewSummaries) {
       const event = summary.event;
       const [x, y] = project(event.lon, event.lat);
       if (!pointInMap(x, y)) continue;
-      const color = summary.maxVei == null ? unknownColor : veiColors[Math.min(8, summary.maxVei)];
-      const radius = Math.min(7.5, 1.1 + Math.sqrt(summary.count) * .33 + (summary.maxVei || 0) * .18);
-      mapCtx.globalAlpha = summary.maxVei == null ? .42 : .78;
-      mapCtx.fillStyle = color;
-      mapCtx.beginPath(); mapCtx.arc(x, y, radius, 0, Math.PI * 2); mapCtx.fill();
+      const color = veiColor(summary.maxVei);
+      const radius = Math.min(8, 2.3 + Math.sqrt(summary.count) * .33 + (summary.maxVei || 0) * .2);
+      drawDot(mapCtx, x, y, radius, summary.maxVei, summary.maxVei == null ? .85 : .95);
       if ((summary.maxVei || 0) >= 6) {
-        mapCtx.globalAlpha = .28;
+        mapCtx.globalAlpha = .5;
         mapCtx.strokeStyle = color;
         mapCtx.lineWidth = 1;
         mapCtx.beginPath(); mapCtx.arc(x, y, radius + 3, 0, Math.PI * 2); mapCtx.stroke();
@@ -583,13 +629,11 @@ import infoIcon from "./vendor/lucide/info.js";
       if (!browserEventIsVisible(event)) continue;
       const [x, y] = project(event.lon, event.lat);
       if (!pointInMap(x, y)) continue;
-      const color = event.vei == null ? unknownColor : veiColors[Math.min(8, event.vei)];
-      const radius = 2.1 + (event.vei == null ? 0 : Math.min(6, event.vei) * .34);
-      mapCtx.globalAlpha = browserHasActiveFilter() ? .78 : .46;
-      mapCtx.fillStyle = color;
-      mapCtx.beginPath(); mapCtx.arc(x, y, radius, 0, Math.PI * 2); mapCtx.fill();
+      const color = veiColor(event.vei);
+      const radius = 2.8 + (event.vei == null ? 0 : Math.min(6, event.vei) * .38);
+      drawDot(mapCtx, x, y, radius, event.vei, browserHasActiveFilter() ? .95 : .6);
       if (browserHasActiveFilter()) {
-        mapCtx.globalAlpha = .28;
+        mapCtx.globalAlpha = .45;
         mapCtx.strokeStyle = color;
         mapCtx.lineWidth = 1;
         mapCtx.beginPath(); mapCtx.arc(x, y, radius + 3, 0, Math.PI * 2); mapCtx.stroke();
@@ -642,35 +686,31 @@ import infoIcon from "./vendor/lucide/info.js";
     const [x, y] = project(pulse.event.lon, pulse.event.lat);
     if (!pointInMap(x, y, 18)) return true;
     const vei = pulse.event.vei;
-    const color = vei == null ? unknownColor : veiColors[Math.min(8, vei)];
+    const color = veiColor(vei);
     const base = 2.2 + (vei == null ? 1 : Math.pow(vei + 1, 0.9));
     const radius = reducedMotion ? base * 1.25 : base + progress * (8 + base * .8);
     const alpha = Math.pow(1 - progress, 1.5);
 
     mapCtx.save();
     mapCtx.globalCompositeOperation = "source-over";
-    const blueHalo = mapCtx.createRadialGradient(x, y, 0, x, y, base * 3.8);
-    blueHalo.addColorStop(0, "rgba(161,227,255,.5)");
-    blueHalo.addColorStop(.22, "rgba(122,184,255,.18)");
-    blueHalo.addColorStop(1, "rgba(36,60,84,0)");
+    const halo = mapCtx.createRadialGradient(x, y, 0, x, y, base * 3.8);
+    for (const [stop, tint] of mapPalette.halo) halo.addColorStop(stop, tint);
     mapCtx.globalAlpha = Math.min(.26, alpha * .32);
-    mapCtx.fillStyle = blueHalo;
+    mapCtx.fillStyle = halo;
     mapCtx.beginPath(); mapCtx.arc(x, y, base * 2.25, 0, Math.PI * 2); mapCtx.fill();
 
     mapCtx.globalAlpha = Math.min(.24, alpha * .28);
-    mapCtx.strokeStyle = "rgba(122,184,255,.72)";
+    mapCtx.strokeStyle = mapPalette.haloRing;
     mapCtx.lineWidth = .8;
     mapCtx.beginPath(); mapCtx.arc(x, y, radius * .74, 0, Math.PI * 2); mapCtx.stroke();
 
-    mapCtx.globalAlpha = alpha * (pulse.event.precision === 0 ? .5 : .82);
+    mapCtx.globalAlpha = alpha * (pulse.event.precision === 0 ? .62 : .92);
     mapCtx.strokeStyle = color;
-    mapCtx.lineWidth = pulse.event.precision === 0 ? .9 : 1.15;
+    mapCtx.lineWidth = pulse.event.precision === 0 ? 1.1 : 1.6;
     if (pulse.event.precision === 0) mapCtx.setLineDash([3, 5]);
     mapCtx.beginPath(); mapCtx.arc(x, y, radius, 0, Math.PI * 2); mapCtx.stroke();
     mapCtx.setLineDash([]);
-    mapCtx.globalAlpha = Math.min(.95, alpha + .15);
-    mapCtx.fillStyle = color;
-    mapCtx.beginPath(); mapCtx.arc(x, y, Math.max(1.8, base * .38), 0, Math.PI * 2); mapCtx.fill();
+    drawDot(mapCtx, x, y, Math.max(2.6, base * .5), vei, Math.min(1, alpha + .2));
     mapCtx.restore();
     return true;
   }
@@ -983,7 +1023,7 @@ import infoIcon from "./vendor/lucide/info.js";
   }
 
   function showEvent(event) {
-    const color = event.vei == null ? unknownColor : veiColors[Math.min(8, event.vei)];
+    const color = veiColor(event.vei);
     const badge = document.querySelector("#eventVei");
     badge.textContent = event.vei == null ? "VEI UNKNOWN" : `VEI ${event.vei}${event.veiModifier || ""}`;
     badge.style.color = color;
@@ -1069,7 +1109,7 @@ import infoIcon from "./vendor/lucide/info.js";
       mapWidth: reliefWidth,
       mapHeight: Math.min(h * .66, reliefWidth * .46),
     }, view.lon, view.lat, view.zoom);
-    ctx.strokeStyle = "rgba(122,184,255,.18)";
+    ctx.strokeStyle = mapPalette.graticule;
     ctx.lineWidth = 1;
     for (let lon = -150; lon <= 150; lon += 30) {
       const a = exportPoint(lon, -82, w, h, view), b = exportPoint(lon, 82, w, h, view);
@@ -1080,8 +1120,8 @@ import infoIcon from "./vendor/lucide/info.js";
       ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke();
     }
     if (!world) { ctx.restore(); return; }
-    ctx.fillStyle = "#223d4d";
-    ctx.strokeStyle = "#83aeca";
+    ctx.fillStyle = mapPalette.exportLand;
+    ctx.strokeStyle = mapPalette.exportCoast;
     ctx.lineWidth = .8;
     for (const feature of world.features) {
       const geometry = feature.geometry;
@@ -1103,7 +1143,7 @@ import infoIcon from "./vendor/lucide/info.js";
     }
     if (plateBoundaries) {
       ctx.save();
-      ctx.strokeStyle = "rgba(240,214,140,.5)";
+      ctx.strokeStyle = mapPalette.plates;
       ctx.lineWidth = 1;
       ctx.setLineDash([5, 5]);
       for (const feature of plateBoundaries.features || []) {
@@ -1125,18 +1165,49 @@ import infoIcon from "./vendor/lucide/info.js";
     ctx.save();
     clipExportMap(ctx, w, h);
     ctx.globalCompositeOperation = "source-over";
-    for (const summary of volcanoSummaries.values()) {
+    for (const summary of overviewSummaries) {
       const p = exportPoint(summary.event.lon, summary.event.lat, w, h, view);
-      const color = summary.maxVei == null ? unknownColor : veiColors[Math.min(8, summary.maxVei)];
-      const radius = Math.min(7, .9 + Math.sqrt(summary.count) * .3 + (summary.maxVei || 0) * .16);
-      ctx.globalAlpha = summary.maxVei == null ? .38 : .78;
-      ctx.fillStyle = color;
-      ctx.beginPath(); ctx.arc(p[0], p[1], radius, 0, Math.PI * 2); ctx.fill();
+      const radius = Math.min(8.5, 2.4 + Math.sqrt(summary.count) * .34 + (summary.maxVei || 0) * .2);
+      drawDot(ctx, p[0], p[1], radius, summary.maxVei, summary.maxVei == null ? .85 : .95);
+    }
+    ctx.restore();
+  }
+
+  // One-line VEI key in the gap between the map and the credit lines.
+  function drawExportKey(ctx, w, h) {
+    const size = Math.round(w * .0105);
+    const r = w * .0042;
+    const y = h * .12 + Math.min(h * .66, w * .92 * .46) + h * .035;
+    let x = w * .04;
+    ctx.save();
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = "#c4ced8";
+    ctx.font = `600 ${size}px system-ui, sans-serif`;
+    ctx.fillText("VEI", x, y);
+    x += ctx.measureText("VEI").width + w * .012;
+    ctx.font = `400 ${size}px system-ui, sans-serif`;
+    for (const [label, vei] of [["Unknown", null], ["0–1", 0], ["2", 2], ["3", 3], ["4", 4], ["5", 5], ["6", 6], ["7–8", 7]]) {
+      drawDot(ctx, x + r, y, r, vei, 1, w / 1920);
+      ctx.globalAlpha = 1;
+      ctx.fillStyle = "#c4ced8";
+      ctx.fillText(label, x + r * 2 + w * .004, y);
+      x += r * 2 + w * .004 + ctx.measureText(label).width + w * .014;
+    }
+    if (plateBoundaries) {
+      const dash = 5 * w / 1920;
+      x += w * .006;
+      ctx.strokeStyle = mapPalette.plates;
+      ctx.lineWidth = Math.max(1, w / 1600);
+      ctx.setLineDash([dash, dash]);
+      ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w * .022, y); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillText("Plate boundaries", x + w * .028, y);
     }
     ctx.restore();
   }
 
   function drawExportLabels(ctx, w, h, title, detail) {
+    drawExportKey(ctx, w, h);
     ctx.save();
     ctx.fillStyle = "#f0f5fb";
     ctx.font = `600 ${Math.round(w * .028)}px system-ui, sans-serif`;
@@ -1235,13 +1306,14 @@ import infoIcon from "./vendor/lucide/info.js";
           const age = (elapsed - pulse.born) / .09;
           if (age >= 7) continue;
           const p = exportPoint(pulse.event.lon, pulse.event.lat, w, h, view);
-          const color = pulse.event.vei == null ? unknownColor : veiColors[Math.min(8, pulse.event.vei)];
+          const color = veiColor(pulse.event.vei);
           const scale = w / 640;
           const radius = (1.5 + (pulse.event.vei || 1) * .28 + age * 1.25) * scale;
-          ctx.globalAlpha = Math.max(0, 1 - age / 7) * .62;
-          ctx.strokeStyle = color; ctx.lineWidth = .9 * scale;
+          const fade = Math.max(0, 1 - age / 7);
+          ctx.globalAlpha = fade * .75;
+          ctx.strokeStyle = color; ctx.lineWidth = 1.1 * scale;
           ctx.beginPath(); ctx.arc(p[0], p[1], radius, 0, Math.PI * 2); ctx.stroke();
-          ctx.fillStyle = color; ctx.beginPath(); ctx.arc(p[0], p[1], 1.4 * scale, 0, Math.PI * 2); ctx.fill();
+          drawDot(ctx, p[0], p[1], 1.9 * scale, pulse.event.vei, Math.min(1, fade * 1.2), .6 * scale);
         }
         ctx.restore();
         const label = formatYear(year);
@@ -1427,6 +1499,18 @@ import infoIcon from "./vendor/lucide/info.js";
   reduceMotionButton.addEventListener("click", event => {
     reducedMotion = !reducedMotion;
     event.currentTarget.setAttribute("aria-pressed", String(reducedMotion));
+  });
+  const greyMapButton = document.querySelector("#greyMap");
+  function setMapPalette(name) {
+    mapPalette = mapPalettes[name];
+    relief.grey = name === "grey";
+    document.documentElement.dataset.map = name;
+    greyMapButton.setAttribute("aria-pressed", String(name === "grey"));
+  }
+  setMapPalette("colour");
+  installSonificationHelp(greyMapButton, document.querySelector("#mapTooltip"), { pinOnClick: false });
+  greyMapButton.addEventListener("click", () => {
+    setMapPalette(mapPalette === mapPalettes.grey ? "colour" : "grey");
   });
   soundButton.addEventListener("click", async () => {
     soundButton.disabled = true;

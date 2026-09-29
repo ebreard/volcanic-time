@@ -14,7 +14,7 @@ Built by Eric C.P. Breard, University of Edinburgh, School of GeoSciences.
 - Colours each eruption by its Volcanic Explosivity Index (VEI) and marks how precisely its start date is known.
 - Turns each record into sound: a drum or cymbal hit chosen by VEI, plus a quiet piano note when the VEI is known. Longitude sets left and right balance.
 - Lets you search by volcano, country, region or record number, and filter by VEI and date precision.
-- Exports the view as a 1920 x 1080 PNG, GIF or MP4 (MP4 includes the sound).
+- Exports the view as a 1920 x 1080 PNG, GIF or MP4 with a VEI key (MP4 includes the sound).
 
 ## How to use it
 
@@ -28,6 +28,7 @@ Built by Eric C.P. Breard, University of Edinburgh, School of GeoSciences.
 | Browse Eruptions | Search box plus VEI and Date filters. Click a record to see it and open its GVP page. |
 | Map buttons | Zoom in, zoom out, reset the view. |
 | Export PNG / GIF / MP4 | Save the current view. MP4 records the full catalogue at 1x calendar speed and takes about three minutes. Keep the tab visible until it finishes. |
+| Grey map | Turns the relief and map lines grey, so only the eruptions carry colour. |
 | Reduce motion | Stops eruption rings from expanding. |
 | About the data | Full explanation of the data, the VEI scale and every sound mapping. |
 
