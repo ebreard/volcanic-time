@@ -10,7 +10,7 @@ Built by Eric C.P. Breard, University of Edinburgh, School of GeoSciences.
 
 ## What it does
 
-- Plays the whole Smithsonian Global Volcanism Program (GVP) Holocene eruption catalogue through time: 9,918 eruption records at 1,214 volcanoes, of which 9,911 are placed on the map.
+- Plays the whole Smithsonian Global Volcanism Program (GVP) Holocene eruption catalogue through time: 9,918 eruption records. The 9,911 that can be placed on the map come from 848 volcanoes.
 - Colours each eruption by its Volcanic Explosivity Index (VEI) and marks how precisely its start date is known.
 - Turns each record into sound: a drum or cymbal hit chosen by VEI, plus a quiet piano note when the VEI is known. Longitude sets left and right balance.
 - Lets you search by volcano, country, region or record number, and filter by VEI and date precision.
