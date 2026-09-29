@@ -1,0 +1,16 @@
+{
+  "image": "./earth-relief.webp",
+  "attribution": "Relief: ETOPO1 ice-surface, Fatiando/ICGEM 10 arc-minute grid; shaded and resampled for display.",
+  "source": "https://doi.org/10.5281/zenodo.5882203",
+  "grid_spacing": "10 x 10 arc-minutes",
+  "image_width": 2160,
+  "image_height": 1080,
+  "bounds": [
+    -180,
+    180,
+    -90,
+    90
+  ],
+  "registration": "pixel",
+  "source_registration": "gridline"
+}

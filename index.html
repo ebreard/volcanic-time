@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="Explore confirmed Holocene eruptions from the Smithsonian Global Volcanism Program through time, light and sound.">
+  <meta name="theme-color" content="#0b0f14">
+  <title>Volcanic Time</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0f14'/%3E%3Cpath d='M8 49 26 20l8 13 6-9 16 25Z' fill='%23e08a3c'/%3E%3Ccircle cx='31' cy='14' r='5' fill='%23f0d68c'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css?v=37">
+</head>
+<body>
+  <main class="app" aria-label="Volcanic Time eruption explorer">
+    <canvas id="map" aria-label="World map of volcanic eruptions"></canvas>
+    <div class="vignette" aria-hidden="true"></div>
+
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="assets/ecpb_roundel.png" alt="">
+        <div>
+          <h1>VOLCANIC TIME</h1>
+          <p>Eric C.P. Breard · GVP catalog</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button id="aboutButton" class="quiet-button" type="button" aria-label="About the data" title="Data, VEI and sound mappings"><span>About the data</span></button>
+        <div class="sound-controls" role="group" aria-label="Eruption sound">
+          <button id="soundButton" class="sound-button" type="button" aria-pressed="true" aria-label="Mute eruption sound" title="Mute eruption sound">Sound</button>
+          <input id="soundVolume" type="range" min="0" max="100" value="45" aria-label="Eruption sound volume" aria-valuetext="45%" title="Sound volume">
+          <button id="sonificationHelp" class="sonification-help" type="button" aria-label="Learn more about sonification" aria-describedby="sonificationTooltip" aria-expanded="false">?</button>
+          <span id="soundStatus" class="sr-only" role="status"></span>
+        </div>
+      </div>
+    </header>
+    <div id="sonificationTooltip" class="sonification-tooltip" role="tooltip" hidden>
+      <strong>Hearing the catalogue</strong>
+      <p>Each eruption record plays one drum or cymbal hit. VEI determines which instrument plays and which quiet piano note accompanies it. Higher VEI gives a lower, longer piano note. Unknown VEI gives only a drum-rim tap, with no piano.</p>
+      <p>Longitude sets the balance between the left and right speakers. Less precise start dates make piano notes begin more gently.</p>
+      <p>Recorded start dates set the timing. Different historical periods are sped up by different amounts. No backing beat or repeating melody is added; repeated sounds alone do not indicate a volcanic cycle.</p>
+    </div>
+
+    <section class="time-readout" aria-live="polite">
+      <div id="era" class="era">BCE</div>
+      <div id="year" class="year">9000</div>
+      <div id="dateDetail" class="date-detail">earliest cataloged records</div>
+    </section>
+
+    <div class="left-stack" aria-label="Eruption controls and statistics">
+      <aside id="stats" class="stats" aria-label="Playback statistics">
+        <div class="stat">
+          <span>Window eruptions</span>
+          <strong id="visibleCount">0</strong>
+        </div>
+        <div class="stat">
+          <span>Largest recent</span>
+          <strong id="largestRecent">—</strong>
+        </div>
+        <div class="stat wide">
+          <span>Date precision</span>
+          <strong id="datePrecisionStat">Waiting for playback</strong>
+        </div>
+      </aside>
+
+      <aside class="browser-panel" aria-label="Eruption browser">
+        <div class="browser-heading">
+          <div>
+            <p>Browse</p>
+            <h2>Eruptions</h2>
+          </div>
+          <button id="clearFilters" class="icon-button" type="button" aria-label="Clear browser filters">×</button>
+        </div>
+        <div class="search-picker">
+          <label class="search-field">
+            <span>Search volcano, country, region, or record</span>
+            <input id="searchInput" type="search" autocomplete="off" placeholder="Etna, Iceland, VEI 6, 332010" role="combobox" aria-label="Search volcano, country, region, or record" aria-autocomplete="list" aria-haspopup="listbox" aria-expanded="false" aria-controls="volcanoOptions">
+          </label>
+          <div id="volcanoOptions" class="volcano-options" role="listbox" aria-label="Matching volcanoes" hidden></div>
+        </div>
+        <div class="filter-grid">
+          <label>
+            <span>VEI</span>
+            <select id="veiFilter">
+              <option value="any">Any VEI</option>
+              <option value="unknown">Unknown</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+              <option value="4">4+</option>
+              <option value="5">5+</option>
+              <option value="6">6+</option>
+            </select>
+          </label>
+          <label>
+            <span>Date</span>
+            <select id="precisionFilter">
+              <option value="any">Any precision</option>
+              <option value="day">Known to day</option>
+              <option value="month">Known to month</option>
+              <option value="year">Year only</option>
+            </select>
+          </label>
+        </div>
+        <p id="browserSummary" class="browser-summary"></p>
+        <ol id="resultsList" class="results-list"></ol>
+      </aside>
+    </div>
+
+    <div class="right-stack" aria-label="Map keys and exports">
+      <section class="legend" aria-label="Volcanic Explosivity Index legend">
+        <div class="legend-title">VEI key</div>
+        <div class="legend-items">
+          <span><i style="--c:#6d7a86"></i>?</span>
+          <span><i style="--c:#7ab8ff"></i>0–1</span>
+          <span><i style="--c:#7fb394"></i>2</span>
+          <span><i style="--c:#f0d68c"></i>3</span>
+          <span><i style="--c:#e08a3c"></i>4</span>
+          <span><i style="--c:#c65b3d"></i>5</span>
+          <span><i style="--c:#b44848"></i>6</span>
+          <span><i style="--c:#ece6d8"></i>7–8</span>
+        </div>
+        <div class="boundary-key"><i></i><span>PB2002 plate boundaries</span></div>
+        <p class="legend-note">Volcanic Explosivity Index (0–8): primarily bulk tephra volume; roughly 10× per step from VEI 2. ? = unknown, not zero.</p>
+      </section>
+
+      <aside class="country-panel" aria-label="Top countries by recorded eruptions">
+        <div class="country-heading">
+          <p>Countries</p>
+          <h2>Recorded eruptions</h2>
+        </div>
+        <ol id="countryList" class="country-list"></ol>
+      </aside>
+
+    </div>
+
+    <div class="map-action-bar">
+      <section class="map-controls" aria-label="Map controls">
+        <button id="zoomIn" type="button" aria-label="Zoom in">+</button>
+        <button id="zoomOut" type="button" aria-label="Zoom out">−</button>
+        <button id="resetMap" type="button" aria-label="Reset map">⌂</button>
+      </section>
+
+      <div class="export-tools" aria-label="Export visualization">
+        <button id="pngButton" class="quiet-button" type="button">Export PNG</button>
+        <button id="gifButton" class="quiet-button" type="button">Export GIF</button>
+        <button id="mp4Button" class="quiet-button" type="button">Export MP4</button>
+        <button id="cancelExportButton" class="quiet-button" type="button" hidden>Cancel</button>
+        <span id="exportStatus" class="sr-only" role="status"></span>
+      </div>
+    </div>
+
+    <aside id="eventCard" class="event-card" hidden>
+      <button id="closeCard" class="close" aria-label="Close eruption details" type="button">×</button>
+      <div id="eventVei" class="event-vei">VEI —</div>
+      <h2 id="eventName">Volcano</h2>
+      <p id="eventPlace" class="place"></p>
+      <dl id="eventDetails"></dl>
+      <a id="gvpLink" target="_blank" rel="noreferrer">Open GVP record ↗</a>
+    </aside>
+
+    <section class="transport" aria-label="Timeline controls">
+      <div class="transport-row">
+        <button id="playButton" class="play" type="button" aria-label="Play timeline">▶</button>
+        <div class="clock-mode">
+          <span id="rateLabel">700 years / sec</span>
+          <button id="modeButton" type="button" class="mode-button" aria-pressed="false">Calendar time</button>
+          <button id="overviewButton" type="button" class="mode-button">All eruptions</button>
+        </div>
+        <label class="speed-control">
+          <span>Speed</span>
+          <select id="speedSelect">
+            <option value="0.5">0.5×</option>
+            <option value="1" selected>1×</option>
+            <option value="2">2×</option>
+          </select>
+        </label>
+      </div>
+      <div class="timeline-wrap">
+        <canvas id="timeline" aria-hidden="true"></canvas>
+        <input id="scrubber" type="range" min="0" max="10000" value="0" aria-label="Historical date">
+      </div>
+      <div class="timeline-labels" aria-hidden="true">
+        <span>55,500 BCE</span><span>5000 BCE</span><span>1 CE</span><span>1500</span><span>1900</span><span>2026 CE</span>
+      </div>
+    </section>
+
+    <button id="reduceMotion" class="reduce-motion" type="button" aria-pressed="false" aria-describedby="motionTooltip" aria-expanded="false">Reduce motion</button>
+    <div id="motionTooltip" class="sonification-tooltip" role="tooltip" hidden>
+      <strong>Less movement on the map</strong>
+      <p>When on, eruption rings stop expanding and fade away sooner. Playback speed, eruption records and sound stay the same.</p>
+    </div>
+  </main>
+
+  <dialog id="mp4Dialog" aria-labelledby="mp4Title" aria-describedby="mp4Details">
+    <form method="dialog">
+      <button class="close dialog-close" aria-label="Close MP4 options" value="close">×</button>
+      <h2 id="mp4Title">Export MP4</h2>
+      <p id="mp4Details">Full catalogue · 1920 × 1080 · 1× calendar speed · <span id="mp4Duration"></span></p>
+      <label class="mp4-sound-option"><input id="mp4Sound" type="checkbox" checked> Include sound (drums and piano)</label>
+      <p>Recording takes about three minutes. Keep this tab visible until it finishes.</p>
+      <div class="mp4-actions">
+        <button class="quiet-button" value="cancel">Cancel</button>
+        <button id="mp4Start" type="button">Record MP4 at 1×</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="aboutDialog">
+    <form method="dialog">
+      <button class="close dialog-close" aria-label="Close" value="close">×</button>
+      <p class="eyebrow">ABOUT THE DATA</p>
+      <h2>A record of observations, not a record of every eruption</h2>
+      <p>This visualization uses confirmed Holocene eruptions published by the Smithsonian Global Volcanism Program. Older records are much less complete, and their dates are often known only to a year or range. The app uses a dated Holocene eruption export, not the live weekly activity feed.</p>
+      <div class="method-grid">
+        <div><strong>Colour</strong><span>Volcanic Explosivity Index</span></div>
+        <div><strong>Soft pulse</strong><span>Imprecise start date</span></div>
+        <div><strong>Sound</strong><span>VEI, position and dating precision</span></div>
+        <div><strong>Playback</strong><span>Slows as records become denser</span></div>
+        <div><strong>Final overview</strong><span>One symbol per volcano; size reflects eruption count</span></div>
+        <div><strong>Exports</strong><span>1920 × 1080 PNG, GIF or MP4 · ECP Breard</span></div>
+      </div>
+      <p id="dataVersion" class="source-note"></p>
+      <section class="vei-reference" aria-labelledby="veiReferenceTitle">
+        <h3 id="veiReferenceTitle">Understanding VEI</h3>
+        <p>The Volcanic Explosivity Index (Newhall &amp; Self, 1982) is a semi-quantitative scale from 0 to 8, primarily based on erupted <strong>bulk tephra volume</strong>: ash, pumice, lapilli and volcanic bombs. Plume height, qualitative descriptions and other observations help assign an index when volume estimates are incomplete.</p>
+        <div class="vei-table-wrap" role="region" aria-label="VEI volume, plume height and descriptor reference" tabindex="0">
+          <table class="vei-table">
+            <caption>Volume thresholds and indicative plume heights</caption>
+            <thead><tr><th scope="col">VEI</th><th scope="col">Bulk tephra (m³)</th><th scope="col">Plume height</th><th scope="col">Descriptor</th></tr></thead>
+            <tbody>
+              <tr><th scope="row">0</th><td>&lt;10<sup>4</sup></td><td>&lt;100 m</td><td>Non-explosive</td></tr>
+              <tr><th scope="row">1</th><td>10<sup>4</sup> to &lt;10<sup>6</sup></td><td>100 m–1 km</td><td>Gentle</td></tr>
+              <tr><th scope="row">2</th><td>10<sup>6</sup> to &lt;10<sup>7</sup></td><td>1–5 km</td><td>Explosive</td></tr>
+              <tr><th scope="row">3</th><td>10<sup>7</sup> to &lt;10<sup>8</sup></td><td>3–15 km</td><td>Severe</td></tr>
+              <tr><th scope="row">4</th><td>10<sup>8</sup> to &lt;10<sup>9</sup></td><td>10–25 km</td><td>Cataclysmic</td></tr>
+              <tr><th scope="row">5</th><td>10<sup>9</sup> to &lt;10<sup>10</sup></td><td>&gt;25 km</td><td>Paroxysmal</td></tr>
+              <tr><th scope="row">6</th><td>10<sup>10</sup> to &lt;10<sup>11</sup></td><td>&gt;25 km</td><td>Colossal</td></tr>
+              <tr><th scope="row">7</th><td>10<sup>11</sup> to &lt;10<sup>12</sup></td><td>&gt;25 km</td><td>Super-colossal</td></tr>
+              <tr><th scope="row">8</th><td>≥10<sup>12</sup></td><td>&gt;25 km</td><td>Mega-colossal</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="source-note">Plume-height ranges overlap: these are supporting criteria, not strict independent cutoffs. Duration, stratospheric injection and qualitative observations can also inform an assignment; a recorded VEI does not guarantee a measured volume.</p>
+        <h4>Volume, not total magma output</h4>
+        <p>VEI is not simply log10 of total erupted volume. Thresholds increase tenfold from VEI 2 upward, but VEI 1 spans 10<sup>4</sup>–10<sup>6</sup> m³. The VEI 8 threshold is 10<sup>12</sup> m³, or 1,000 km³, of <strong>bulk tephra, not dense-rock equivalent (DRE)</strong>. Bulk volume includes pore space; conversion to DRE requires density assumptions. Effusive lava output is not represented well by VEI.</p>
+        <h4>Size is not eruption rate</h4>
+        <p>A short, high-rate eruption and a prolonged, lower-rate eruption can share a VEI. Its mixed criteria describe explosive eruption size but do not isolate intensity. Pyle's magnitude, <strong>M = log10(erupted mass in kg) − 7</strong>, measures mass, while intensity measures mass eruption rate (kg/s). These complementary measures separate how much material erupted from how quickly it erupted.</p>
+        <p>VEI alone is not a measure of local danger, fatalities or climate impact. Low-VEI eruptions can still be hazardous. In this catalog, <strong>? means unknown, not VEI 0</strong>; no value is inferred for missing records.</p>
+        <p class="source-note"><a href="https://doi.org/10.1029/JC087iC02p01231" target="_blank" rel="noreferrer">Newhall &amp; Self (1982), The volcanic explosivity index (VEI): An estimate of explosive magnitude for historical volcanism ↗</a></p>
+      </section>
+      <h3>Hearing the catalogue</h3>
+      <p>Sonification means representing data with sound. Each of the 9,918 eruption records in the saved GVP catalogue plays a drum or cymbal hit. The 7,725 records with a known VEI also play a quiet piano note. The 2,193 records with an unknown VEI play only a tap on the snare drum's rim. The seven records without matched coordinates play equally through both speakers but have no map marker. These are musical sounds chosen to represent the data, not recordings of real eruptions.</p>
+      <ul class="source-note">
+        <li><strong>Which drum or cymbal plays:</strong> VEI 0 uses closed hi-hat cymbals; 1, a bass drum (kick); 2, a snare drum; 3, a higher tom drum; 4, a lower tom drum; 5, a ride cymbal; 6, a crash cymbal; and 7-8, a China cymbal. Unknown VEI uses a drum-rim tap, a separate sound from VEI 0.</li>
+        <li><strong>How high or low the piano note is:</strong> higher VEI produces a lower note that lasts longer. VEI 0-8 uses the notes D5, B4, A4, F#4, E4, D4, B3, A3 and F#3, in that order. Note duration is 0.24 + 0.065 x VEI seconds. These notes are musical choices, not the natural frequencies of eruptions.</li>
+        <li><strong>Left and right speakers:</strong> longitude sets the speaker balance: western longitudes lean left and eastern longitudes lean right. Moving the map does not move the sound. The balance is longitude / 180, capped at -0.8 and +0.8 so sounds are not placed entirely in one speaker.</li>
+        <li><strong>How gently piano notes begin:</strong> a start date specified to the day gives a 3-millisecond fade-in; month-only dates give 6 milliseconds; year-only dates give 12 milliseconds. Less precise dates therefore have a slightly softer beginning. This describes date precision, not eruption duration. Latitude and tectonic setting do not change the sound.</li>
+        <li><strong>Volume:</strong> the piano is quieter than the drums, calibrated at 11 dB below them in the reference recording. When sounds overlap, their combined volume is reduced and limited to help prevent distortion. Loudness does not measure eruption energy or eruption count. No records are skipped to limit the number of sounds, although overlapping sounds can be hard to hear separately.</li>
+        <li><strong>When sounds play:</strong> recorded eruption start dates determine the timing. At 1x, the default calendar playback lasts about three minutes, with different historical periods sped up by different amounts. Changing speed changes the spacing between sounds, not how high or low the notes are. MP4 exports always use the 1x calendar timing, regardless of the selected playback speed or mode. Event rhythm mode uses different timing. There is no added backing beat, random drum flourish or repeating melody. Records assigned the same start time play together.</li>
+        <li><strong>What repeated sounds mean:</strong> dates known only to the year are placed at midyear by convention. Repeated VEI values, estimated dates, incomplete historical records and different playback rates can create audible patterns. A repeated sequence alone is not evidence of a volcanic cycle. Each sound represents a recorded eruption start, not every day that an eruption remained active.</li>
+      </ul>
+      <p class="source-note">Drums: <a href="https://rytmenpinne.wordpress.com/sounds-and-such/salamander-drumkit" target="_blank" rel="noreferrer">Salamander Drumkit</a> by Alexander Holm (Rytmenpinne), <a href="assets/sonification/Salamander-LICENSE.txt">CC BY-SA 3.0</a>; adapted with mono downmix, silence trimming, short faded tails and level calibration. Adapted drum samples retain that license. Piano: <a href="https://github.com/sgossner/VSCO-2-CE" target="_blank" rel="noreferrer">VSCO 2 Community Edition</a> (CC0), by Sam Gossner and Simon Dalzell; sample cutting by Elan Hickler / Soundemote. Engine: <a href="https://tonejs.github.io/" target="_blank" rel="noreferrer">Tone.js</a> (MIT). MP4 has its own Include sound option, independent of the main Sound toggle. It uses the current volume, or 45% if that volume is zero.</p>
+      <a href="https://volcano.si.edu/" target="_blank" rel="noreferrer">Smithsonian Global Volcanism Program ↗</a>
+    </form>
+  </dialog>
+
+  <script src="data.js"></script>
+  <script type="module" src="app.js?v=47"></script>
+</body>
+</html>
