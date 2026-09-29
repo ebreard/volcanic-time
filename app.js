@@ -12,7 +12,11 @@ import infoIcon from "./vendor/lucide/info.js";
   "use strict";
 
   const source = window.VOLCANIC_TIME_DATA;
-  const eruptions = source.eruptions.map((row, index) => {
+  // Holocene only: the GVP Holocene list also holds a few records dated before
+  // 9,700 BCE (11,700 years before 2000 CE), which are left out.
+  const holoceneStart = -9700;
+  const holoceneRows = source.eruptions.filter(row => row[5] >= holoceneStart);
+  const eruptions = holoceneRows.map((row, index) => {
     const volcano = source.volcanoes[row[1]];
     return {
       idx: index, n: row[0], v: row[1], year: row[2], month: row[3], day: row[4], t: row[5],
@@ -22,9 +26,14 @@ import infoIcon from "./vendor/lucide/info.js";
       country: volcano[1], region: volcano[2], type: volcano[3], tectonic: volcano[4],
       rock: volcano[5], lat: volcano[6], lon: volcano[7],
     };
-  }).concat(unlocatedEruptions).sort((a, b) => a.t - b.t || a.n - b.n);
+  }).concat(unlocatedEruptions.filter(event => event.t >= holoceneStart)).sort((a, b) => a.t - b.t || a.n - b.n);
   eruptions.forEach((event, index) => { event.idx = index; });
-  const meta = source.meta;
+  const meta = {
+    ...source.meta,
+    mappedEruptions: holoceneRows.length,
+    knownVei: holoceneRows.filter(row => row[9] != null).length,
+    dayPrecision: holoceneRows.filter(row => row[6] === 2).length,
+  };
   const minYear = eruptions[0].t;
   const maxYear = eruptions[eruptions.length - 1].t + 1 / 365;
   const plateBoundaryUrl = "https://raw.githubusercontent.com/fraxen/tectonicplates/master/GeoJSON/PB2002_boundaries.json";
@@ -132,8 +141,7 @@ import infoIcon from "./vendor/lucide/info.js";
   const cancelExportButton = document.querySelector("#cancelExportButton");
 
   const schedule = [
-    { from: minYear, to: -11345, rate: (-11345 - minYear) / 3 },
-    { from: -11345, to: 1500, rate: (1500 + 11345) / 60 },
+    { from: minYear, to: 1500, rate: (1500 - minYear) / 60 },
     { from: 1500, to: 1800, rate: 300 / 22.5 },
     { from: 1800, to: 1950, rate: 150 / 30 },
     { from: 1950, to: 2000, rate: 50 / 30 },

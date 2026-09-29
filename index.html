@@ -178,7 +178,7 @@
         <input id="scrubber" type="range" min="0" max="10000" value="0" aria-label="Historical date">
       </div>
       <div class="timeline-labels" aria-hidden="true">
-        <span>55,500 BCE</span><span>5000 BCE</span><span>1 CE</span><span>1500</span><span>1900</span><span>2026 CE</span>
+        <span>9,700 BCE</span><span>5000 BCE</span><span>1 CE</span><span>1500</span><span>1900</span><span>2026 CE</span>
       </div>
     </section>
 
@@ -215,7 +215,7 @@
       <button class="close dialog-close" aria-label="Close" value="close">×</button>
       <p class="eyebrow">ABOUT THE DATA</p>
       <h2>A record of observations, not a record of every eruption</h2>
-      <p>This visualization uses confirmed Holocene eruptions published by the Smithsonian Global Volcanism Program. Older records are much less complete, and their dates are often known only to a year or range. The app uses a dated Holocene eruption export, not the live weekly activity feed.</p>
+      <p>This visualization uses confirmed Holocene eruptions published by the Smithsonian Global Volcanism Program. Older records are much less complete, and their dates are often known only to a year or range. The app uses a dated Holocene eruption export, not the live weekly activity feed. Twelve records in that export are dated before 9,700 BCE, the start of the Holocene, and are left out.</p>
       <div class="method-grid">
         <div><strong>Colour</strong><span>Volcanic Explosivity Index</span></div>
         <div><strong>Soft pulse</strong><span>Imprecise start date</span></div>
@@ -254,7 +254,7 @@
         <p class="source-note"><a href="https://doi.org/10.1029/JC087iC02p01231" target="_blank" rel="noreferrer">Newhall &amp; Self (1982), The volcanic explosivity index (VEI): An estimate of explosive magnitude for historical volcanism ↗</a></p>
       </section>
       <h3>Hearing the catalogue</h3>
-      <p>Sonification means representing data with sound. Each of the 9,918 eruption records in the saved GVP catalogue plays a drum or cymbal hit. The 7,725 records with a known VEI also play a quiet piano note. The 2,193 records with an unknown VEI play only a tap on the snare drum's rim. The seven records without matched coordinates play equally through both speakers but have no map marker. These are musical sounds chosen to represent the data, not recordings of real eruptions.</p>
+      <p>Sonification means representing data with sound. Each of the 9,906 Holocene eruption records in the saved GVP catalogue plays a drum or cymbal hit. The 7,719 records with a known VEI also play a quiet piano note. The 2,187 records with an unknown VEI play only a tap on the snare drum's rim. The four records without matched coordinates play equally through both speakers but have no map marker. These are musical sounds chosen to represent the data, not recordings of real eruptions.</p>
       <ul class="source-note">
         <li><strong>Which drum or cymbal plays:</strong> VEI 0 uses closed hi-hat cymbals; 1, a bass drum (kick); 2, a snare drum; 3, a higher tom drum; 4, a lower tom drum; 5, a ride cymbal; 6, a crash cymbal; and 7-8, a China cymbal. Unknown VEI uses a drum-rim tap, a separate sound from VEI 0.</li>
         <li><strong>How high or low the piano note is:</strong> higher VEI produces a lower note that lasts longer. VEI 0-8 uses the notes D5, B4, A4, F#4, E4, D4, B3, A3 and F#3, in that order. Note duration is 0.24 + 0.065 x VEI seconds. These notes are musical choices, not the natural frequencies of eruptions.</li>
@@ -270,6 +270,6 @@
   </dialog>
 
   <script src="data.js"></script>
-  <script type="module" src="app.js?v=51"></script>
+  <script type="module" src="app.js?v=52"></script>
 </body>
 </html>

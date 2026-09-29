@@ -1,6 +1,6 @@
 # Volcanic Time
 
-Watch about 9,900 recorded Holocene volcanic eruptions appear on a world map, from 55,500 BCE to 2026 CE, and hear them as drums and piano.
+Watch about 9,900 recorded Holocene volcanic eruptions appear on a world map, from 9,700 BCE to 2026 CE, and hear them as drums and piano.
 
 **[Open the live app](https://ebreard.github.io/volcanic-time/)**
 
@@ -10,7 +10,7 @@ Built by Eric C.P. Breard, University of Edinburgh, School of GeoSciences.
 
 ## What it does
 
-- Plays the whole Smithsonian Global Volcanism Program (GVP) Holocene eruption catalogue through time: 9,918 eruption records. The 9,911 that can be placed on the map come from 848 volcanoes.
+- Plays the whole Smithsonian Global Volcanism Program (GVP) Holocene eruption catalogue through time: 9,906 eruption records. The 9,902 that can be placed on the map come from 848 volcanoes. Twelve records in the GVP export are dated before 9,700 BCE, the start of the Holocene, and are left out.
 - Colours each eruption by its Volcanic Explosivity Index (VEI) and marks how precisely its start date is known.
 - Turns each record into sound: a drum or cymbal hit chosen by VEI, plus a quiet piano note when the VEI is known. Longitude sets left and right balance.
 - Lets you search by volcano, country, region or record number, and filter by VEI and date precision.
