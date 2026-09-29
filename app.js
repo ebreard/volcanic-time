@@ -1,5 +1,5 @@
 import { createReliefLayer } from "./relief.js?v=4";
-import { VolcanoSound } from "./sonification.js?v=12";
+import { VolcanoSound, prefetchInstruments } from "./sonification.js?v=13";
 import unlocatedEruptions from "./unlocated-eruptions.js";
 import { installSonificationHelp } from "./sonification-help.js?v=2";
 import { installVolcanoSearch } from "./volcano-search.js";
@@ -1550,6 +1550,7 @@ import infoIcon from "./vendor/lucide/info.js";
   };
   document.addEventListener("pointerdown", unlockAudio, { once: true, capture: true });
   document.addEventListener("keydown", unlockAudio, { once: true, capture: true });
+  setTimeout(() => { if (sound.enabled) prefetchInstruments(); }, 1500);
   for (const button of document.querySelectorAll(".legend-sound")) {
     button.addEventListener("click", async () => {
       try {

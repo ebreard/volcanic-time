@@ -116,7 +116,7 @@ async function loadTone() {
   return tonePromise;
 }
 
-async function loadSample(name, context) {
+function fetchSample(name) {
   if (!sampleBytes.has(name)) {
     const url = new URL(`./assets/sonification/${name}.wav`, import.meta.url);
     sampleBytes.set(name, fetch(url, { signal: AbortSignal.timeout(20000) }).then(response => {
@@ -124,7 +124,21 @@ async function loadSample(name, context) {
       return response.arrayBuffer();
     }).catch(error => { sampleBytes.delete(name); throw error; }));
   }
-  return context.decodeAudioData((await sampleBytes.get(name)).slice(0));
+  return sampleBytes.get(name);
+}
+
+async function loadSample(name, context) {
+  return context.decodeAudioData((await fetchSample(name)).slice(0));
+}
+
+const SAMPLE_NAMES = [...new Set(DRUM_KIT), 'side-stick',
+  ...PIANO_PITCHES.flatMap((_, vei) => [0, 1, 2].map(precision => `piano-${vei}-${precision}`))];
+
+// Download the instruments before the first click, so the first sound does not
+// wait for the network; decoding still needs the audio context that a click creates.
+export function prefetchInstruments() {
+  loadTone().catch(() => {});
+  for (const name of SAMPLE_NAMES) fetchSample(name).catch(() => {});
 }
 
 export class VolcanoSound {
@@ -173,8 +187,7 @@ export class VolcanoSound {
   }
 
   async initialize(resumed) {
-    const names = [...new Set(DRUM_KIT), 'side-stick',
-      ...PIANO_PITCHES.flatMap((_, vei) => [0, 1, 2].map(precision => `piano-${vei}-${precision}`))];
+    const names = SAMPLE_NAMES;
     const loading = (async () => {
       const result = [];
       for (let i = 0; i < names.length; i += 4) {
