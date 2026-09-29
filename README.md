@@ -27,7 +27,7 @@ Built by Eric C.P. Breard, University of Edinburgh, School of GeoSciences.
 | Sound button and slider | Mute or set the volume. |
 | Browse Eruptions | Search box plus VEI and Date filters. Click a record to see it and open its GVP page. |
 | Map buttons | Zoom in, zoom out, reset the view. |
-| Export PNG / GIF / MP4 | Save the current view. MP4 records the full catalogue at 1x calendar speed and takes about three minutes. Keep the tab visible until it finishes. |
+| Export PNG / GIF / MP4 | Save the current view. MP4 records the full catalogue at 1x calendar speed (about three minutes), or a 40-second version for social media. Keep the tab visible until it finishes. |
 | Grey map | Turns the relief and map lines grey, so only the eruptions carry colour. |
 | Reduce motion | Stops eruption rings from expanding. |
 | About the data | Full explanation of the data, the VEI scale and every sound mapping. |
@@ -55,9 +55,9 @@ The tectonic plate lines load from raw.githubusercontent.com at run time. Offlin
 
 ## Browser support
 
-- Tested: current Chromium (desktop). Load, playback with sound, search and filters, PNG export and GIF export all ran with no errors.
+- Tested: current Chromium and Edge (desktop). Load, playback with sound, search and filters, and PNG, GIF and MP4 export all ran with no errors.
+- Tested: Firefox 157 (desktop). Playback, the grey map, and PNG and GIF export work. Firefox cannot record MP4, and the app says so.
 - MP4 export uses the browser's MP4 recorder. The app asks for a current Chrome, Edge or Safari.
-- Firefox is untested and its MP4 export support is not confirmed.
 
 ## Data and licences
 

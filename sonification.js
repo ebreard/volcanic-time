@@ -97,6 +97,15 @@ export function densityGain(count) {
   return 1 / Math.max(1, count / 3);
 }
 
+// Firefox has no cancelAndHoldAtTime; cancelling what lies ahead and pinning
+// the current value holds the level the same way.
+function holdAt(param, time) {
+  if (param.cancelAndHoldAtTime) { param.cancelAndHoldAtTime(time); return; }
+  const value = param.value;
+  param.cancelScheduledValues(time);
+  param.setValueAtTime(value, time);
+}
+
 let tonePromise;
 const sampleBytes = new Map();
 async function loadTone() {
@@ -145,6 +154,8 @@ export class VolcanoSound {
       return;
     }
     if (this.disposed) throw new Error("This sound session has closed.");
+    // iPhone Safari mutes Web Audio under the silent switch unless the page asks for playback audio.
+    if (navigator.audioSession) navigator.audioSession.type = "playback";
     if (!this.ready) {
       this.context = this.createContext();
       // Resume in the user gesture, before fetching instruments or importing Tone.
@@ -212,7 +223,7 @@ export class VolcanoSound {
   rampMaster(value, duration = .025) {
     if (!this.master) return;
     const gain = this.master.gain, now = this.context.currentTime;
-    gain.cancelAndHoldAtTime(now);
+    holdAt(gain, now);
     gain.setValueAtTime(gain.value, now);
     gain.linearRampToValueAtTime(value, now + duration);
   }
@@ -297,7 +308,7 @@ export class VolcanoSound {
 
   fadeVoice(voice, now, duration) {
     const gain = voice.output.gain;
-    gain.cancelAndHoldAtTime(now);
+    holdAt(gain, now);
     gain.linearRampToValueAtTime(0, now + duration);
     voice.source.stop(now + duration);
   }

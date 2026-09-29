@@ -16,7 +16,12 @@ export async function recordMp4({ canvas, renderFrame, audio, view, duration, on
   }
   signal.throwIfAborted();
   const firstEvents = renderFrame(0, 0, false);
-  const stream = canvas.captureStream(30);
+  // Push each rendered frame by hand where supported: automatic capture of an
+  // off-screen canvas can drop most frames.
+  const manualFrames = typeof CanvasCaptureMediaStreamTrack !== "undefined"
+    && typeof CanvasCaptureMediaStreamTrack.prototype.requestFrame === "function";
+  const stream = canvas.captureStream(manualFrames ? 0 : 30);
+  const pushFrame = () => { if (manualFrames) stream.getVideoTracks()[0]?.requestFrame(); };
   try {
     if (audio) {
       for (const track of audio.captureStream().getAudioTracks()) stream.addTrack(track);
@@ -57,6 +62,7 @@ export async function recordMp4({ canvas, renderFrame, audio, view, duration, on
           if (frame !== lastFrame) {
             lastFrame = frame;
             const rendered = renderFrame(Math.min(1, elapsed / duration), Math.min(duration, elapsed), elapsed >= duration);
+            pushFrame();
             audio?.playEvents(rendered.events ?? rendered, view.lon, view.zoom, rendered.timing);
             onProgress(Math.min(99, Math.floor(elapsed / (duration + hold) * 100)));
           }
@@ -77,6 +83,7 @@ export async function recordMp4({ canvas, renderFrame, audio, view, duration, on
       };
       recorder.onstart = () => {
         started = performance.now();
+        pushFrame();
         audio?.setPlaying(true);
         audio?.playEvents(firstEvents.events ?? firstEvents, view.lon, view.zoom, firstEvents.timing);
         frameRequest = requestAnimationFrame(tick);

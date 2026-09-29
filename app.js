@@ -1,9 +1,9 @@
 import { createReliefLayer } from "./relief.js?v=4";
-import { VolcanoSound } from "./sonification.js?v=10";
+import { VolcanoSound } from "./sonification.js?v=11";
 import unlocatedEruptions from "./unlocated-eruptions.js";
 import { installSonificationHelp } from "./sonification-help.js?v=2";
 import { installVolcanoSearch } from "./volcano-search.js";
-import { recordMp4 } from "./mp4-export.js?v=3";
+import { recordMp4 } from "./mp4-export.js?v=4";
 import volumeOn from "./vendor/lucide/volume-2.js";
 import volumeOff from "./vendor/lucide/volume-x.js";
 import infoIcon from "./vendor/lucide/info.js";
@@ -1289,7 +1289,7 @@ import infoIcon from "./vendor/lucide/info.js";
     if (busy) exportStatus.textContent = "Preparing export…";
   }
 
-  function createExportAnimation(canvas, view, nominalTiming = false) {
+  function createExportAnimation(canvas, view, nominalTiming = false, timeScale = 1) {
     const w = canvas.width, h = canvas.height;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     const base = document.createElement("canvas"); base.width = w; base.height = h;
@@ -1332,7 +1332,7 @@ import infoIcon from "./vendor/lucide/info.js";
       const timing = { fromYear: previousYear, toYear: year, duration: elapsed - previousElapsed };
       if (nominalTiming) {
         const fromSeconds = yearToNominalSeconds(previousYear);
-        timing.offsetFor = event => yearToNominalSeconds(event.t) - fromSeconds;
+        timing.offsetFor = event => (yearToNominalSeconds(event.t) - fromSeconds) * timeScale;
       }
       previousYear = year;
       previousElapsed = elapsed;
@@ -1340,10 +1340,13 @@ import infoIcon from "./vendor/lucide/info.js";
     };
   }
 
-  async function exportMp4() {
+  // short: the same timeline squeezed into 37 s plus the 3 s closing hold, for social media.
+  async function exportMp4(short = false) {
     if (exporting) return;
     const button = document.querySelector("#mp4Button");
     const view = exportView();
+    const duration = short ? 37 : totalNominalSeconds;
+    const pace = short ? "as a 40-second version" : "at 1x";
     const recordingSound = mp4Sound.checked ? new VolcanoSound() : null;
     setPlaying(false);
     exportAbort = new AbortController();
@@ -1360,14 +1363,17 @@ import infoIcon from "./vendor/lucide/info.js";
       await prepareExport();
       exportAbort.signal.throwIfAborted();
       const canvas = document.createElement("canvas"); canvas.width = 1920; canvas.height = 1080;
-      exportStatus.textContent = recordingSound ? "Recording MP4 at 1x with sonification." : "Recording silent MP4 at 1x.";
+      // Claim a GPU-backed context before createExportAnimation asks for a
+      // read-optimised one; only the GIF path reads pixels back.
+      canvas.getContext("2d");
+      exportStatus.textContent = `Recording ${recordingSound ? "" : "silent "}MP4 ${pace}${recordingSound ? " with sonification" : ""}.`;
       const blob = await recordMp4({
-        canvas, view, audio: recordingSound, signal: exportAbort.signal, duration: totalNominalSeconds,
-        renderFrame: createExportAnimation(canvas, view, true),
+        canvas, view, audio: recordingSound, signal: exportAbort.signal, duration,
+        renderFrame: createExportAnimation(canvas, view, true, duration / totalNominalSeconds),
         onProgress: percent => { button.textContent = `MP4 ${percent}%`; },
       });
-      downloadBlob(blob, `volcanic-time-hd-1x-${recordingSound ? "sound" : "silent"}.mp4`);
-      exportStatus.textContent = `Full HD MP4 exported at 1x ${recordingSound ? "with sonification" : "without audio"}, ECP Breard logo and credit.`;
+      downloadBlob(blob, `volcanic-time-hd-${short ? "40s" : "1x"}-${recordingSound ? "sound" : "silent"}.mp4`);
+      exportStatus.textContent = `Full HD MP4 exported ${pace} ${recordingSound ? "with sonification" : "without audio"}, ECP Breard logo and credit.`;
     } catch (error) {
       if (error.name === "AbortError") exportStatus.textContent = "MP4 export cancelled.";
       else reportExportError(button, error);
@@ -1556,6 +1562,10 @@ import infoIcon from "./vendor/lucide/info.js";
   document.querySelector("#mp4Start").addEventListener("click", () => {
     mp4Dialog.close();
     exportMp4();
+  });
+  document.querySelector("#mp4Short").addEventListener("click", () => {
+    mp4Dialog.close();
+    exportMp4(true);
   });
   cancelExportButton.addEventListener("click", () => exportAbort?.abort());
   document.querySelector("#closeCard").addEventListener("click", () => { eventCard.hidden = true; });
